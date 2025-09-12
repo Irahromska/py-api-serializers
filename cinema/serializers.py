@@ -1,10 +1,12 @@
 from rest_framework import serializers
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession
 
+
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         fields = ("id", "name",)
+
 
 class ActorSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
@@ -16,6 +18,7 @@ class ActorSerializer(serializers.ModelSerializer):
     def get_full_name(self, obj: Actor) -> str:
         return f"{obj.first_name} {obj.last_name}"
 
+
 class CinemaHallSerializer(serializers.ModelSerializer):
     capacity = serializers.SerializerMethodField()
 
@@ -26,42 +29,70 @@ class CinemaHallSerializer(serializers.ModelSerializer):
     def get_capacity(self, obj: CinemaHall) -> int:
         return obj.rows * obj.seats_in_row
 
+
 class MovieSerializer(serializers.ModelSerializer):
     genres = GenreSerializer(many=True, read_only=True)
     actors = ActorSerializer(many=True, read_only=True)
 
     class Meta:
         model = Movie
-        fields = ("id", "title", "description", "duration", "actors", "genres")
+        fields = (
+            "id",
+            "title",
+            "description",
+            "duration",
+            "actors",
+            "genres",
+        )
+
 
 class MovieListSerializer(serializers.ModelSerializer):
     actors = serializers.SerializerMethodField()
     genres = serializers.SlugRelatedField(
         many=True,
         read_only=True,
-        slug_field="name"
+        slug_field="name",
     )
 
     class Meta:
         model = Movie
-        fields = ("id", "title", "description", "duration", "actors", "genres")
+        fields = (
+            "id",
+            "title",
+            "description",
+            "duration",
+            "actors",
+            "genres",
+        )
 
     def get_actors(self, obj: Movie) -> list[str]:
-        return [f"{actor.first_name} {actor.last_name}" for actor in obj.actors.all()]
+        return [
+            f"{actor.first_name} {actor.last_name}"
+            for actor in obj.actors.all()
+        ]
+
 
 class MovieCreateSerializer(serializers.ModelSerializer):
     genres = serializers.PrimaryKeyRelatedField(
         many=True,
-        queryset=Genre.objects.all()
+        queryset=Genre.objects.all(),
     )
     actors = serializers.PrimaryKeyRelatedField(
         many=True,
-        queryset=Actor.objects.all()
+        queryset=Actor.objects.all(),
     )
 
     class Meta:
         model = Movie
-        fields = ("id", "title", "description", "duration", "actors", "genres")
+        fields = (
+            "id",
+            "title",
+            "description",
+            "duration",
+            "actors",
+            "genres",
+        )
+
 
 class MovieSessionSerializer(serializers.ModelSerializer):
     movie = MovieListSerializer(read_only=True)
@@ -71,17 +102,31 @@ class MovieSessionSerializer(serializers.ModelSerializer):
         model = MovieSession
         fields = ("id", "movie", "cinema_hall", "show_time",)
 
+
 class MovieSessionListSerializer(serializers.ModelSerializer):
-    movie_title = serializers.CharField(source="movie.title", read_only=True)
-    cinema_hall_name = serializers.CharField(source="cinema_hall.name", read_only=True)
+    movie_title = serializers.CharField(
+        source="movie.title",
+        read_only=True,
+    )
+    cinema_hall_name = serializers.CharField(
+        source="cinema_hall.name",
+        read_only=True,
+    )
     cinema_hall_capacity = serializers.SerializerMethodField()
 
     class Meta:
         model = MovieSession
-        fields = ("id", "show_time", "movie_title", "cinema_hall_name", "cinema_hall_capacity")
+        fields = (
+            "id",
+            "show_time",
+            "movie_title",
+            "cinema_hall_name",
+            "cinema_hall_capacity",
+        )
 
     def get_cinema_hall_capacity(self, obj: MovieSession) -> int:
         return obj.cinema_hall.rows * obj.cinema_hall.seats_in_row
+
 
 class MovieSessionCreateSerializer(serializers.ModelSerializer):
     class Meta:
